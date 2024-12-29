@@ -1,7 +1,7 @@
 use rusqlite::{params, Connection, Result};
 use std::collections::HashMap;
 
-pub fn save_coins_to_db(coin_map: &HashMap<String, i32>) -> Result<()> {
+pub fn save_coins_to_db(coin_map: &HashMap<String, f64>) -> Result<()> {
     let connection = Connection::open("coins.db")?;
 
     connection.execute(

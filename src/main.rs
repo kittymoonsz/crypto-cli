@@ -4,30 +4,41 @@ mod ui;
 mod menu;
 
 use rusqlite::Result;
-use menu::path;
-use db::save_coins_to_db;
-use crypto::get_url;
+use crate::crypto::Coin;
+use std::collections::HashMap;
+use crate::menu::path;
+use crypto::get_all_coins;
+use std::fs::File;
+use std::io::Write;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let crypto_id = "bitcoin";
-    let currency = "usd";
+    path().await;
+    coin_list().await?;
+    Ok(())
+}
 
-    let url = format!(
-        "https://api.coingecko.com/api/v3/simple/price?ids={}&vs_currencies={}",
-        crypto_id, currency
-    );
+async fn coin_list() -> Result<(), Box<dyn std::error::Error>> {
+    let all_coins = match get_all_coins().await {
+        Ok(coins) => coins,
+        Err(e) => {
+            eprintln!("Failed to fetch all coins: {}", e);
+            return Ok(());
+        }
+    };
 
-    if let Err(e) = get_url(&url, crypto_id, currency).await {
-        eprintln!("Failed to fetch crypto price: {}", e);
-    }
+    println!("Fetched {} coins.", all_coins.len());
 
-    let coin_map = path();
+    let coin_map: HashMap<String, Coin> = all_coins
+        .into_iter()
+        .map(|coin| (coin.id.clone(), coin))
+        .collect();
 
-    if let Err(e) = save_coins_to_db(&coin_map) {
-        eprintln!("Error saving coins: {}", e);
-    }
+    let file_content = serde_json::to_string_pretty(&coin_map)?;
+    let mut file = File::create("coins_list.json")?;
+    file.write_all(file_content.as_bytes())?;
 
+    println!("Saved list of all coins to 'coins_list.json'.");
     Ok(())
 }
 

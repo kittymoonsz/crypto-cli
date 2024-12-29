@@ -34,7 +34,7 @@ pub fn clear_terminal() {
         .unwrap();
 }
 
-pub fn show_coins(coin_map: &HashMap<String, i32>) {
+pub fn show_coins(coin_map: &HashMap<String, f64>) {
    animate_text("===== Suas Moedas =====".bold().bright_yellow().to_string(), 50);
     match get_coins_from_db() {
         Ok(coins) => {
