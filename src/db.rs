@@ -7,29 +7,33 @@ pub fn save_coins_to_db(coin_map: &HashMap<String, f64>) -> Result<()> {
     connection.execute(
         "CREATE TABLE IF NOT EXISTS coins (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            quantity INTEGER NOT NULL
-            )",
+            name TEXT UNIQUE NOT NULL,
+            quantity REAL NOT NULL
+        )",
         [],
     )?;
 
     for (coin, quantity) in coin_map {
         connection.execute(
-            "INSERT INTO coins (name, quantity) VALUES (?1, ?2)",
+            "INSERT INTO coins (name, quantity) 
+             VALUES (?1, ?2)
+             ON CONFLICT(name) DO UPDATE SET 
+             quantity = quantity + excluded.quantity",
             params![coin, quantity],
         )?;
     }
+
     Ok(())
 }
 
-pub fn get_coins_from_db() -> Result<HashMap<String, i32>> {
+pub fn get_coins_from_db() -> Result<HashMap<String, f64>> {
     let connection = Connection::open("coins.db")?;
     let mut stmt = connection.prepare("SELECT name, quantity FROM coins")?;
-    
+
     let coin_iter = stmt.query_map([], |row| {
         Ok((
             row.get::<_, String>(0)?,
-            row.get::<_, i32>(1)?,
+            row.get::<_, f64>(1)?,
         ))
     });
 
@@ -53,4 +57,3 @@ pub fn get_coins_from_db() -> Result<HashMap<String, i32>> {
     }
     Ok(coin_map)
 }
-

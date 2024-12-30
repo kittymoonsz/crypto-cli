@@ -20,7 +20,7 @@ pub fn read_string() -> String {
    input.trim().to_string()
 }
 
-pub fn read_integer() -> i32 {
+pub fn read_integer() -> f64 {
     let mut input = String::new();
     std::io::stdin()
         .read_line(&mut input)
